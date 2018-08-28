@@ -1,0 +1,53 @@
+import serial, time 
+
+vials = [6,7,8]; #which vials do you want to clean? 
+cleaning_time = 15 #how long do you want to clean? in seconds  
+evaporation_time = 10800 #how long do you want to dry? in seconds, 3 hours
+
+tnsyport = '\\\\.\\COM3';
+tnsy = serial.Serial(tnsyport,115200,timeout=1)
+
+time.sleep(3) 
+
+print "System Ready. Initiating cleaning..."
+
+status = 0; vial = 0
+while True:
+    print "Cleaning Vial #" + str(vials[vial])
+    if vial == len(vials):
+        starttime = time.time(); status = 2
+    if status == 0: 
+        tnsy.write("vialOn 1 " + str(vials[vial]) + "\r")
+        tnsy.write("vialOn 2 " + str(vials[vial]) + "\r")
+        status = 1; starttime = time.time()
+    if status == 1:
+        if time.time() - starttime >= cleaning_time:
+            tnsy.write("vialOff 1 " + str(vials[vial]) + "\r")
+            tnsy.write("vialOff 2 " + str(vials[vial]) + "\r")
+            vial = vial + 1; status = 0
+    if status == 2:
+        if time.time() - starttime >= cleaning_time:
+            break
+
+print "Cleaning Complete. Initiating drying..."
+vial = 0; status = 0
+while True: 
+    print "Drying Vial #" + str(vials[vial])
+    if vial == len(vials):
+        starttime = time.time(); status = 2
+    if status == 0: 
+        tnsy.write("vialOn 1 " + str(vials[vial]) + "\r")
+        tnsy.write("vialOn 2 " + str(vials[vial]) + "\r")
+        status = 1; starttime = time.time()
+    if status == 1:
+        if time.time() - starttime >= evaporation_time:
+            tnsy.write("vialOff 1 " + str(vials[vial]) + "\r")
+            tnsy.write("vialOff 2 " + str(vials[vial]) + "\r")
+            vial = vial + 1; status = 0
+    if status == 2:
+        if time.time() - starttime >= evaporation_time:
+            break
+
+tnsy.close()
+
+print "Manifolds clean and dry. System Shutdown."
