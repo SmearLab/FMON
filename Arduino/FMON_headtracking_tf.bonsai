@@ -1,0 +1,744 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<WorkflowBuilder Version="2.3.0">
+  <Workflow xmlns:q2="clr-namespace:Bonsai.Scripting;assembly=Bonsai.Scripting" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:q3="clr-namespace:Bonsai.Vision;assembly=Bonsai.Vision" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:q5="clr-namespace:Bonsai.IO;assembly=Bonsai.System" xmlns:q4="clr-namespace:Bonsai.PointGrey;assembly=Bonsai.PointGrey" xmlns:q1="clr-namespace:Bonsai.Osc;assembly=Bonsai.Osc" xmlns="https://horizongir.org/bonsai">
+    <Nodes>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="Zip" />
+      </Expression>
+      <Expression xsi:type="q1:SendMessage">
+        <q1:Connection>2python</q1:Connection>
+        <q1:Address>/2python</q1:Address>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="Zip" />
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="Zip" />
+      </Expression>
+      <Expression xsi:type="q2:PythonTransform">
+        <q2:Script>globalx = 0
+import math
+
+@returns(int)
+def process(value):
+  global globalx
+  if math.isnan(value) == True:
+    x = globalx
+  if value == 0:
+    x = globalx
+  if math.isnan(value) == False:
+    if value != 0:
+      x = value
+      globalx = x
+  return x</q2:Script>
+      </Expression>
+      <Expression xsi:type="q2:PythonTransform">
+        <q2:Script>globaly = 0
+import math
+
+@returns(int)
+def process(value):
+  global globaly
+  if math.isnan(value) == True:
+    y = globaly
+  if value == 0:
+    y = globaly
+  if math.isnan(value) == False:
+    if value != 0:
+      y = value
+      globaly = y
+  return y</q2:Script>
+      </Expression>
+      <Expression xsi:type="MemberSelector">
+        <Selector>Source.Centroid.X</Selector>
+      </Expression>
+      <Expression xsi:type="MemberSelector">
+        <Selector>Source.Centroid.Y</Selector>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="q3:LargestBinaryRegion" />
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="q3:BinaryRegionAnalysis" />
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="q3:LargestBinaryRegion" />
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="q3:FindContours">
+          <q3:Mode>External</q3:Mode>
+          <q3:Method>ChainApproxNone</q3:Method>
+          <q3:Offset>
+            <q3:X>0</q3:X>
+            <q3:Y>0</q3:Y>
+          </q3:Offset>
+          <q3:MinArea xsi:nil="true" />
+          <q3:MaxArea xsi:nil="true" />
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="q3:BinaryRegionAnalysis" />
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="q3:Threshold">
+          <q3:ThresholdValue>50</q3:ThresholdValue>
+          <q3:MaxValue>255</q3:MaxValue>
+          <q3:ThresholdType>BinaryInv</q3:ThresholdType>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="q3:FindContours">
+          <q3:Mode>External</q3:Mode>
+          <q3:Method>ChainApproxNone</q3:Method>
+          <q3:Offset>
+            <q3:X>0</q3:X>
+            <q3:Y>0</q3:Y>
+          </q3:Offset>
+          <q3:MinArea>0</q3:MinArea>
+          <q3:MaxArea xsi:nil="true" />
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="q3:Grayscale" />
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="q3:HsvThreshold">
+          <q3:Lower>
+            <q3:Val0>112</q3:Val0>
+            <q3:Val1>47</q3:Val1>
+            <q3:Val2>0</q3:Val2>
+            <q3:Val3>0</q3:Val3>
+          </q3:Lower>
+          <q3:Upper>
+            <q3:Val0>154</q3:Val0>
+            <q3:Val1>255</q3:Val1>
+            <q3:Val2>122</q3:Val2>
+            <q3:Val3>255</q3:Val3>
+          </q3:Upper>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="q3:ConvertColor">
+          <q3:Conversion>Rgb2Hsv</q3:Conversion>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="MemberSelector">
+        <Selector>Source.Timestamp</Selector>
+      </Expression>
+      <Expression xsi:type="q2:PythonTransform">
+        <q2:Script>import clr
+clr.AddReference("OpenCV.Net")
+from OpenCV.Net import *
+
+nosecolor = Scalar.Rgb(255,0,0)
+headcolor = Scalar.Rgb(255,255,0)
+comcolor = Scalar.Rgb(50,50,255)
+linecolor = Scalar.Rgb(100,100,100)
+orientationcolor = Scalar.Rgb(255,255,255)
+linethickness = 7
+circlethickness = 6
+
+@returns(IplImage)
+def process(value):
+  image = value.Item1
+  pt1 = value.Item2.Item1
+  pt2 = value.Item2.Item2
+  head1 = value.Item3.Item1
+  head2 = value.Item3.Item2
+  com1 = value.Item4.Item1
+  com2 = value.Item4.Item2
+
+  height = image.Size.Height
+  xmin = 85; xmax = 1100; x = xmax - xmin
+  ymin = 35; ymax = 655; y = ymax - ymin
+  width = image.Size.Width
+  CV.Line(image,Point((x/3)+xmin,ymin),Point((x/3)+xmin,ymax),linecolor,thickness = linethickness)
+  CV.Line(image,Point((x*2/3)+xmin,ymin),Point((x*2/3)+xmin,ymax),linecolor,thickness= linethickness)
+  CV.Line(image,Point(xmin,(y/2)+ymin),Point(xmax,(y/2)+ymin),linecolor,thickness = linethickness)
+  CV.Line(image,Point(pt1,pt2),Point(head1,head2),orientationcolor,thickness = 2)
+  CV.Line(image,Point(com1,com2),Point(head1,head2),orientationcolor,thickness = 2)
+
+  CV.Circle(image,Point(pt1,pt2),circlethickness,nosecolor,-1)
+  CV.Circle(image,Point(head1,head2),circlethickness,headcolor,-1)
+  CV.Circle(image,Point(com1,com2),circlethickness,comcolor,-1)
+ 
+  return image
+</q2:Script>
+      </Expression>
+      <Expression xsi:type="MemberSelector">
+        <Selector>Source.Image</Selector>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="q4:FlyCapture">
+          <q4:Index>0</q4:Index>
+          <q4:ColorFormat>Bgr</q4:ColorFormat>
+          <q4:ColorProcessing>Default</q4:ColorProcessing>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="q3:VideoWriter">
+          <q3:FileName>Z:\rawvideos\rawvideo.avi</q3:FileName>
+          <q3:Suffix>Timestamp</q3:Suffix>
+          <q3:Buffered>true</q3:Buffered>
+          <q3:Overwrite>false</q3:Overwrite>
+          <q3:FourCC>FMP4</q3:FourCC>
+          <q3:FrameRate>80</q3:FrameRate>
+          <q3:FrameSize>
+            <q3:Width>0</q3:Width>
+            <q3:Height>0</q3:Height>
+          </q3:FrameSize>
+          <q3:ResizeInterpolation>NearestNeighbor</q3:ResizeInterpolation>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="Timestamp" />
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="q5:TextWriter">
+          <q5:FileName>Z:\rawvideos\rawvideo.txt</q5:FileName>
+          <q5:Suffix>Timestamp</q5:Suffix>
+          <q5:Buffered>true</q5:Buffered>
+          <q5:Overwrite>false</q5:Overwrite>
+          <q5:Append>false</q5:Append>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="MemberSelector">
+        <Selector>Source.LocalDateTime.TimeOfDay.TotalSeconds</Selector>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="q3:Flip">
+          <q3:Mode>Both</q3:Mode>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="MemberSelector">
+        <Selector>Source.Centroid.X</Selector>
+      </Expression>
+      <Expression xsi:type="MemberSelector">
+        <Selector>Source.Centroid.Y</Selector>
+      </Expression>
+      <Expression xsi:type="q2:PythonTransform">
+        <q2:Script>globalx = 0
+import math
+
+@returns(int)
+def process(value):
+  global globalx
+  if math.isnan(value) == True:
+    x = globalx
+  if value == 0:
+    x = globalx
+  if math.isnan(value) == False:
+    if value != 0:
+      x = value
+      globalx = x
+  return x</q2:Script>
+      </Expression>
+      <Expression xsi:type="q2:PythonTransform">
+        <q2:Script>globaly = 0
+import math
+
+@returns(int)
+def process(value):
+  global globaly
+  if math.isnan(value) == True:
+    y = globaly
+  if value == 0:
+    y = globaly
+  if math.isnan(value) == False:
+    if value != 0:
+      y = value
+      globaly = y
+  return y</q2:Script>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="Zip" />
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="Zip" />
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="q3:BinaryRegionExtremes">
+          <q3:Method>MajorAxis</q3:Method>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="Zip" />
+      </Expression>
+      <Expression xsi:type="q2:PythonTransform">
+        <q2:Script>globalx = 0
+import math
+
+@returns(int)
+def process(value):
+  global globalx
+  if math.isnan(value) == True:
+    x = globalx
+  if value == 0:
+    x = globalx
+  if math.isnan(value) == False:
+    if value != 0:
+      x = value
+      globalx = x
+  return x</q2:Script>
+      </Expression>
+      <Expression xsi:type="MemberSelector">
+        <Selector>Source.X</Selector>
+      </Expression>
+      <Expression xsi:type="MemberSelector">
+        <Selector>Source.Item1</Selector>
+      </Expression>
+      <Expression xsi:type="MemberSelector">
+        <Selector>Source.Y</Selector>
+      </Expression>
+      <Expression xsi:type="q2:PythonTransform">
+        <q2:Script>globaly = 0
+import math
+
+@returns(int)
+def process(value):
+  global globaly
+  if math.isnan(value) == True:
+    y = globaly
+  if value == 0:
+    y = globaly
+  if math.isnan(value) == False:
+    if value != 0:
+      y = value
+      globaly = y
+  return y</q2:Script>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="Zip" />
+      </Expression>
+      <Expression xsi:type="MemberSelector">
+        <Selector>Source.X</Selector>
+      </Expression>
+      <Expression xsi:type="MemberSelector">
+        <Selector>Source.Y</Selector>
+      </Expression>
+      <Expression xsi:type="q2:PythonTransform">
+        <q2:Script>globaly = 0
+import math
+
+@returns(int)
+def process(value):
+  global globaly
+  if math.isnan(value) == True:
+    y = globaly
+  if value == 0:
+    y = globaly
+  if math.isnan(value) == False:
+    if value != 0:
+      y = value
+      globaly = y
+  return y</q2:Script>
+      </Expression>
+      <Expression xsi:type="MemberSelector">
+        <Selector>Source.Item2</Selector>
+      </Expression>
+      <Expression xsi:type="q2:PythonTransform">
+        <q2:Script>globalx = 0
+import math
+
+@returns(int)
+def process(value):
+  global globalx
+  if math.isnan(value) == True:
+    x = globalx
+  if value == 0:
+    x = globalx
+  if math.isnan(value) == False:
+    if value != 0:
+      x = value
+      globalx = x
+  return x</q2:Script>
+      </Expression>
+      <Expression xsi:type="q2:PythonTransform">
+        <q2:Script>globalx = 0
+import math
+
+@returns(int)
+def process(value):
+  global globalx
+  headx = value.Item1.Item1
+  heady = value.Item1.Item2
+  extreme1_x = value.Item2.Item1
+  extreme1_y = value.Item2.Item2
+  extreme2_x = value.Item3.Item1
+  extreme2_y = value.Item3.Item2
+
+  distance1 = (extreme1_x - headx)*(extreme1_x - headx) + (extreme1_y - heady)*(extreme1_y - heady)
+  distance2 = (extreme2_x - headx)*(extreme2_x - headx) + (extreme2_y - heady)*(extreme2_y - heady)
+  if distance2 &gt; distance1: 
+    nosepositionx = extreme1_x
+  elif distance1 &gt; distance2:
+    nosepositionx = extreme2_x
+  else: nosepositionx = globalx
+  globalx = nosepositionx
+  return nosepositionx</q2:Script>
+      </Expression>
+      <Expression xsi:type="q2:PythonTransform">
+        <q2:Script>globaly = 0
+import math
+
+@returns(int)
+def process(value):
+  global globaly
+  headx = value.Item1.Item1
+  heady = value.Item1.Item2
+  extreme1_x = value.Item2.Item1
+  extreme1_y = value.Item2.Item2
+  extreme2_x = value.Item3.Item1
+  extreme2_y = value.Item3.Item2
+
+  distance1 = (extreme1_x - headx)*(extreme1_x - headx) + (extreme1_y - heady)*(extreme1_y - heady)
+  distance2 = (extreme2_x - headx)*(extreme2_x - headx) + (extreme2_y - heady)*(extreme2_y - heady)
+  if distance2 &gt; distance1: 
+    nosepositiony = extreme1_y
+  elif distance1 &gt; distance2:
+    nosepositiony = extreme2_y
+  else: nosepositiony = globaly
+  globaly = nosepositiony
+  return nosepositiony</q2:Script>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="Zip" />
+      </Expression>
+    </Nodes>
+    <Edges>
+      <Edge>
+        <From>0</From>
+        <To>1</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>1</From>
+        <To>23</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>2</From>
+        <To>19</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>3</From>
+        <To>2</To>
+        <Label>Source4</Label>
+      </Edge>
+      <Edge>
+        <From>4</From>
+        <To>3</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>4</From>
+        <To>0</To>
+        <Label>Source5</Label>
+      </Edge>
+      <Edge>
+        <From>5</From>
+        <To>3</To>
+        <Label>Source2</Label>
+      </Edge>
+      <Edge>
+        <From>5</From>
+        <To>0</To>
+        <Label>Source6</Label>
+      </Edge>
+      <Edge>
+        <From>6</From>
+        <To>4</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>7</From>
+        <To>5</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>8</From>
+        <To>6</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>8</From>
+        <To>7</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>8</From>
+        <To>33</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>9</From>
+        <To>8</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>10</From>
+        <To>27</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>10</From>
+        <To>28</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>11</From>
+        <To>9</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>12</From>
+        <To>10</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>13</From>
+        <To>11</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>14</From>
+        <To>12</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>15</From>
+        <To>13</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>16</From>
+        <To>14</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>17</From>
+        <To>16</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>18</From>
+        <To>25</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>20</From>
+        <To>26</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>21</From>
+        <To>20</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>22</From>
+        <To>2</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>22</From>
+        <To>17</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>23</From>
+        <To>18</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>25</From>
+        <To>24</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>26</From>
+        <To>22</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>26</From>
+        <To>15</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>27</From>
+        <To>29</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>28</From>
+        <To>30</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>29</From>
+        <To>31</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>29</From>
+        <To>0</To>
+        <Label>Source3</Label>
+      </Edge>
+      <Edge>
+        <From>30</From>
+        <To>31</To>
+        <Label>Source2</Label>
+      </Edge>
+      <Edge>
+        <From>30</From>
+        <To>0</To>
+        <Label>Source4</Label>
+      </Edge>
+      <Edge>
+        <From>31</From>
+        <To>32</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>31</From>
+        <To>2</To>
+        <Label>Source3</Label>
+      </Edge>
+      <Edge>
+        <From>32</From>
+        <To>46</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>32</From>
+        <To>47</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>33</From>
+        <To>37</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>33</From>
+        <To>44</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>34</From>
+        <To>32</To>
+        <Label>Source2</Label>
+      </Edge>
+      <Edge>
+        <From>35</From>
+        <To>34</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>36</From>
+        <To>35</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>37</From>
+        <To>36</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>37</From>
+        <To>38</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>38</From>
+        <To>39</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>39</From>
+        <To>34</To>
+        <Label>Source2</Label>
+      </Edge>
+      <Edge>
+        <From>40</From>
+        <To>32</To>
+        <Label>Source3</Label>
+      </Edge>
+      <Edge>
+        <From>41</From>
+        <To>45</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>42</From>
+        <To>43</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>43</From>
+        <To>40</To>
+        <Label>Source2</Label>
+      </Edge>
+      <Edge>
+        <From>44</From>
+        <To>41</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>44</From>
+        <To>42</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>45</From>
+        <To>40</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>46</From>
+        <To>48</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>46</From>
+        <To>0</To>
+        <Label>Source1</Label>
+      </Edge>
+      <Edge>
+        <From>47</From>
+        <To>48</To>
+        <Label>Source2</Label>
+      </Edge>
+      <Edge>
+        <From>47</From>
+        <To>0</To>
+        <Label>Source2</Label>
+      </Edge>
+      <Edge>
+        <From>48</From>
+        <To>2</To>
+        <Label>Source2</Label>
+      </Edge>
+    </Edges>
+  </Workflow>
+  <ExtensionTypes>
+    <Type>Bonsai.Reactive.Zip, Bonsai.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Osc.SendMessage, Bonsai.Osc, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Scripting.PythonTransform, Bonsai.Scripting, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Vision.LargestBinaryRegion, Bonsai.Vision, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Vision.BinaryRegionAnalysis, Bonsai.Vision, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Vision.FindContours, Bonsai.Vision, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Vision.Threshold, Bonsai.Vision, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Vision.Grayscale, Bonsai.Vision, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Vision.HsvThreshold, Bonsai.Vision, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Vision.ConvertColor, Bonsai.Vision, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.PointGrey.FlyCapture, Bonsai.PointGrey, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Vision.VideoWriter, Bonsai.Vision, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Reactive.Timestamp, Bonsai.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.IO.TextWriter, Bonsai.System, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Vision.Flip, Bonsai.Vision, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+    <Type>Bonsai.Vision.BinaryRegionExtremes, Bonsai.Vision, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
+  </ExtensionTypes>
+</WorkflowBuilder>
